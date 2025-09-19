@@ -5,14 +5,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: postgresql
-    targetRevision: 16.7.27
-    helm:
-      releaseName: my-postgresql
-      valueFiles:
-        - devops-manifest/postgresdb/values.yaml
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: postgresql
+      targetRevision: 16.7.27
+      helm:
+        releaseName: my-postgresql
+        valueFiles:
+          - $values/postgresdb/values.yaml
+    - repoURL: git@github.com:Alialshemy/Devops_task.git
+      targetRevision: main
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: default
