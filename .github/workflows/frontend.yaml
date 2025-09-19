@@ -1,0 +1,42 @@
+name: Build & Push Frontend to AWS ECR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # ---------------- AWS Auth ----------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: github-actions-frontend
+
+      # Get ECR login
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      # ---------------- Docker Build ----------------
+      - name: Build Docker image
+        run: |
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend-app:latest
+          docker build -t frontend-app ./frontend
+          docker tag frontend-app:latest $IMAGE_URI
+
+      # ---------------- Push to ECR ----------------
+      - name: Push to ECR
+        run: |
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }_
