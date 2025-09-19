@@ -1,0 +1,21 @@
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2   # or your cluster's storageClass
+
+replica:
+  replicaCount: 2
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
+    memory: 1Gi
+    cpu: 500m
+

@@ -17,17 +17,18 @@ module "vpc" {
   nat_gateway_tags         = try(each.value.nat_gateway_tags, null)
   private_route_table_tags = try(each.value.private_route_table_tags, null)
   tags                     = try(each.value.tags, null)
-
 }
+
 ##############################################################  EKS ###########################################################################
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.2.0"
 
   name               = "${local.app}-cluster"
   kubernetes_version = "1.33"
-  create = true 
+  create             = true
+
   addons = {
     coredns                = {}
     eks-pod-identity-agent = {
@@ -39,25 +40,20 @@ module "eks" {
     }
   }
 
-  # Optional
   endpoint_public_access = true
-
-  # Optional: Adds the current caller identity as an administrator via cluster access entry
   enable_cluster_creator_admin_permissions = true
 
   vpc_id                   = module.vpc["${local.app}"].vpc_id
   subnet_ids               = module.vpc["${local.app}"].private_subnets
   control_plane_subnet_ids = module.vpc["${local.app}"].private_subnets
 
-  # EKS Managed Node Group(s)
   eks_managed_node_groups = {
     example = {
-      # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["m5.xlarge"]
-      min_size     = 1
-      max_size     = 2
-      desired_size = 1
+      min_size       = 1
+      max_size       = 2
+      desired_size   = 1
     }
   }
 
@@ -65,15 +61,17 @@ module "eks" {
     Environment = "prod"
     Terraform   = "true"
   }
-  depends_on = [ module.vpc ]
+
+  depends_on = [module.vpc]
 }
-#####################################################################################
+
+#####################################################################################  Karpenter ###########################################################################
+
 module "karpenter" {
   source = "terraform-aws-modules/eks/aws//modules/karpenter"
 
   cluster_name = module.eks.cluster_name
 
-  # Attach additional IAM policies to the Karpenter node IAM role
   node_iam_role_additional_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
@@ -83,6 +81,9 @@ module "karpenter" {
     Terraform   = "true"
   }
 }
+
+############################################################## Providers ###########################################################################
+
 provider "helm" {
   kubernetes = {
     host                   = module.eks.cluster_endpoint
@@ -91,11 +92,23 @@ provider "helm" {
     exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      # This requires the awscli to be installed locally where Terraform is executed
-      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
     }
   }
 }
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+  }
+}
+
+############################################################## ArgoCD ###########################################################################
 
 resource "helm_release" "argo_cd" {
   name       = "argo-cd"
@@ -109,14 +122,16 @@ resource "helm_release" "argo_cd" {
 
   values = [
     <<-EOT
-    # Example values (you can expand based on your needs)
     server:
       service:
         type: ClusterIP
     EOT
   ]
 }
+
 resource "kubernetes_manifest" "argocd_root_app" {
+  depends_on = [helm_release.argo_cd]
+
   manifest = {
     "apiVersion" = "argoproj.io/v1alpha1"
     "kind"       = "Application"
@@ -128,7 +143,7 @@ resource "kubernetes_manifest" "argocd_root_app" {
     "spec" = {
       "project" = "default"
       "source" = {
-        "repoURL"        = "https://github.com/your-org/your-gitops-repo.git"
+        "repoURL"        = "https://github.com/Alialshemy/Devops_task.git"
         "targetRevision" = "main"
         "path"           = "apps"
       }
@@ -145,5 +160,3 @@ resource "kubernetes_manifest" "argocd_root_app" {
     }
   }
 }
-
-
