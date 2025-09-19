@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: my-postgresql
         valueFiles:
-          - $values/postgresdb/values.yaml
+          - $values/devops-manifest/postgresdb/values.yaml
     - repoURL: git@github.com:Alialshemy/Devops_task.git
       targetRevision: main
       ref: values
