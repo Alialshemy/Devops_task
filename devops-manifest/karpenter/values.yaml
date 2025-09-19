@@ -1,0 +1,16 @@
+settings:
+  clusterName: questcode-cluster
+  interruptionQueue: questcode-cluster
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::167175811320:role/KarpenterController-20250916102205376400000002
+
+controller:
+  resources:
+    requests:
+      cpu: "1"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"

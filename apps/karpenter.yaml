@@ -5,10 +5,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: git@github.com:Alialshemy/Devops_task.git
-    path: devops-manifest/karpenter
-    targetRevision: HEAD
+  sources:
+    - repoURL: oci://public.ecr.aws/karpenter/karpenter
+      chart: karpenter
+      targetRevision: 1.7
+      helm:
+        releaseName: karpenter
+        valueFiles:
+          - $values/devops-manifest/karpenter/values.yaml
+    - repoURL: git@github.com:Alialshemy/Devops_task.git
+      targetRevision: main
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: karpenter
@@ -17,13 +24,6 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - Validate=false
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
       - PruneLast=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
