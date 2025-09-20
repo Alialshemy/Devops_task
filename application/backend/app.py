@@ -27,6 +27,10 @@ with get_connection() as conn:
         )
         """)
         conn.commit()
+@app.route('/health', methods=['GET'])
+def health():
+    return {"status": "ok"}, 200
+
 @app.route('/addTask', methods=['POST'])
 def add_task():
     data = request.json or {}
