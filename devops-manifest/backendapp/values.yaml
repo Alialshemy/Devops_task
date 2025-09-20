@@ -90,6 +90,9 @@ httpRoute:
   hostnames:
   - chart-example.local
   # List of rules and filters applied.
+  secrets:
+   dbCredentials: dbpassword
+
   rules:
   - matches:
     - path:
