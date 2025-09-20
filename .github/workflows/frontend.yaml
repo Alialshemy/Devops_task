@@ -60,3 +60,23 @@ jobs:
           TAG=${{ github.sha }}
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:$TAG
           docker push $IMAGE_URI
+      # ---------------- Update values.yaml ----------------
+      - name: Update backend image tag in values.yaml
+        run: |
+          TAG=${{ github.sha }}
+          YAML_PATH=devops-manifest/backendapp/values.yaml
+          
+          # Use yq to update image tag
+          yq eval ".image.tag = \"$TAG\"" -i $YAML_PATH
+
+      # ---------------- Commit updated values.yaml ----------------
+      - name: Commit updated values.yaml
+        run: |
+          TAG=${{ github.sha }}
+          YAML_PATH=devops-manifest/frontendapp/values.yaml
+          
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add $YAML_PATH
+          git commit -m "Update backend image tag to $TAG" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.Access_TOKEN }}@github.com/${{ github.repository }} HEAD:main

@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    h1 { color: #2c3e50; }
+    input, button { padding: 8px; margin: 5px; }
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 6px; margin: 4px 0; background: #f4f4f4; border-radius: 4px; }
+    .delete-btn { background: red; color: white; border: none; padding: 4px 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Task Manager</h1>
+
+  <div>
+    <input type="text" id="title" placeholder="Task title">
+    <input type="text" id="description" placeholder="Task description">
+    <button onclick="addTask()">Add Task</button>
+  </div>
+
+  <h2>Tasks</h2>
+  <ul id="taskList"></ul>
+
+  <script>
+    const API_BASE = "http://localhost:5000"; // change to backend service URL in Kubernetes
+
+    async function listTasks() {
+      const res = await fetch(`${API_BASE}/listTasks`);
+      const tasks = await res.json();
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
+      tasks.forEach(task => {
+        const li = document.createElement("li");
+        li.textContent = `${task.id}: ${task.title} - ${task.description}`;
+        const btn = document.createElement("button");
+        btn.textContent = "Delete";
+        btn.className = "delete-btn";
+        btn.onclick = () => deleteTask(task.id);
+        li.appendChild(btn);
+        taskList.appendChild(li);
+      });
+    }
+    async function addTask() {
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      await fetch(`${API_BASE}/addTask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description })
+      });
+      listTasks();
+    }
+    async function deleteTask(id) {
+    await fetch(`${API_BASE}/deleteTask/${id}`, { method: "DELETE" });
+    listTasks();
+    }
+    // load tasks on page load
+    listTasks();
+  </script>
+</body>
+</html>
