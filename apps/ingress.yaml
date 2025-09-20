@@ -6,17 +6,14 @@ metadata:
 spec:
   project: default
 
-  sources:
-    - repoURL: https://helm.nginx.com/stable
-      chart: ingress-nginx
-      targetRevision: 2.3.0
-      helm:
-        releaseName: ingress-nginx
-        valueFiles:
-          - $values/devops-manifest/ingress/values.yaml
-    - repoURL: git@github.com:Alialshemy/Devops_task.git
-      targetRevision: main
-      ref: values
+  source:
+    repoURL: https://helm.nginx.com/stable
+    chart: ingress-nginx
+    targetRevision: 2.3.0
+    helm:
+      releaseName: ingress-nginx
+      valueFiles:
+        - devops-manifest/ingress/values.yaml   
 
   destination:
     server: https://kubernetes.default.svc
