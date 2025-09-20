@@ -28,7 +28,7 @@ with get_connection() as conn:
         """)
         conn.commit()
 
-        
+
 @app.route('/health', methods=['GET'])
 def health():
     return {"status": "ok"}, 200
@@ -49,6 +49,9 @@ def add_task():
 
 
 
+@app.route('/', methods=['GET'])
+def root():
+    return {"message": "welcome"}, 200
 
 @app.route('/deleteTask/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
