@@ -20,22 +20,24 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
           role-session-name: github-actions-backend
 
       # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin 167175811320.dkr.ecr.us-east-1.amazonaws.com
 
       # ---------------- Docker Build ----------------
       - name: Build Docker image
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/backend-app:latest"
+          # Use Git SHA as tag
+          TAG=${{ github.sha }}
+          # Or uncomment below to use version number
+          # TAG=v1.0.0
+          IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:$TAG
+          
           docker build -t backend-app ./backend
           docker tag backend-app:latest $IMAGE_URI
 
@@ -45,14 +47,12 @@ jobs:
         with:
           image-ref: backend-app:latest
           format: table
-          exit-code: 1       # fail workflow if HIGH/CRITICAL vulnerabilities
+          exit-code: 1
           severity: HIGH,CRITICAL
 
       # ---------------- Push to ECR ----------------
       - name: Push Docker image to ECR
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/backend-app:latest"
+          TAG=${{ github.sha }}
+          IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:$TAG
           docker push $IMAGE_URI
