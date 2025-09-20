@@ -14,10 +14,8 @@ DB_CONFIG = {
     "password": os.getenv("PGPASSWORD", "test"),
     "port": int(os.getenv("PGPORT", "5432")),
 }
-
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
-
 # Initialize schema once
 with get_connection() as conn:
     with conn.cursor() as cur:
