@@ -14,7 +14,7 @@ spec:
   tls:
     - hosts:
         - dashboard.alitest.site
-      secretName: alitest-site-tls       
+      secretName: alitest1-site-tls       
   rules:
     - host: dashboard.alitest.site
       http:
