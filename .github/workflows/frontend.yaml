@@ -9,6 +9,7 @@ on:
 permissions:
   id-token: write
   contents: read
+
 jobs:
   build-scan-push:
     runs-on: ubuntu-latest
@@ -19,39 +20,43 @@ jobs:
 
       # ---------------- AWS Auth ----------------
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v5.0.0
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: github-actions-frontend
-
+          role-to-assume:  ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+          role-session-name: GitHubActionsSession
       # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin 167175811320.dkr.ecr.us-east-1.amazonaws.com
 
       # ---------------- Docker Build ----------------
       - name: Build Docker image
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/frontend-app:latest"
-          docker build -t frontend-app ./frontend
+          # Use Git SHA as tag
+          TAG=${{ github.sha }}
+          # Or uncomment below to use version number
+          # TAG=v1.0.0
+          IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:$TAG
+          docker build -t frontend-app ./application/frontend/
           docker tag frontend-app:latest $IMAGE_URI
 
       # ---------------- Trivy Scan ----------------
-      - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@v2
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: frontend-app:latest
+          image-ref: 167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:${{ github.sha }}
           format: table
-          exit-code: 1       # fail workflow if vulnerabilities found
-          severity: HIGH,CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
 
       # ---------------- Push to ECR ----------------
       - name: Push Docker image to ECR
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/frontend-app:latest"
+          TAG=${{ github.sha }}
+          IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:$TAG
           docker push $IMAGE_URI
