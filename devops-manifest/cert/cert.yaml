@@ -1,3 +1,6 @@
+# ------------------------------------------------------
+# Cluster-wide Issuer (usable in all namespaces)
+# ------------------------------------------------------
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -14,12 +17,16 @@ spec:
             apiTokenSecretRef:
               name: cloudflare-api-token-secret
               key: api-token
+
 ---
+# ------------------------------------------------------
+# Wildcard certificate in ingress-nginx namespace
+# ------------------------------------------------------
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: alitest-site-cert
-  namespace: ingress-nginx   # cert-manager needs a namespace for the secret
+  namespace: ingress-nginx
 spec:
   secretName: alitest-site-tls
   issuerRef:
@@ -29,5 +36,6 @@ spec:
   dnsNames:
     - "*.alitest.site"
     - alitest.site
-  duration: 2160h    # 90 days default, here ~90 days
-  renewBefore: 720h  # renew 30 days before expiry
+  duration: 2160h        # ~90 days
+  renewBefore: 720h      # renew 30 days before expiry
+
