@@ -1,4 +1,4 @@
-name: Build & Push Backend to AWS ECR
+name: Build, Scan & Push Backend to AWS ECR
 
 on:
   push:
@@ -6,11 +6,9 @@ on:
       - main
     paths:
       - 'backend/**'
-permissions:
-  id-token: write
-  contents: read
+
 jobs:
-  build-and-push:
+  build-scan-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,24 +21,38 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: github-actions-session
+          role-session-name: github-actions-backend
 
-      # Get ECR login
+      # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
-        id: ecr-login
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
           docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       # ---------------- Docker Build ----------------
       - name: Build Docker image
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-app:latest
+          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/backend-app:latest"
           docker build -t backend-app ./backend
           docker tag backend-app:latest $IMAGE_URI
 
+      # ---------------- Trivy Scan ----------------
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v2
+        with:
+          image-ref: backend-app:latest
+          format: table
+          exit-code: 1       # fail workflow if HIGH/CRITICAL vulnerabilities
+          severity: HIGH,CRITICAL
+
       # ---------------- Push to ECR ----------------
-      - name: Push to ECR
+      - name: Push Docker image to ECR
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-app:latest
+          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/backend-app:latest"
           docker push $IMAGE_URI
