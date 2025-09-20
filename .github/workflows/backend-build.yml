@@ -17,12 +17,12 @@ jobs:
 
       # ---------------- AWS Auth ----------------
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v5.0.0
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume:  ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
-          role-session-name: github-actions-backend
-
+          audience: sts.amazonaws.com
+          role-session-name: GitHubActionsSession
       # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
         run: |
