@@ -44,17 +44,17 @@ spec:
             - name: PGHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.dbCredentials }}
+                  name: {{ .Values.secrets.dbCredentials | default "dbpassword" }}
                   key: PGHOST
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.dbCredentials }}
+                  name: {{ .Values.secrets.dbCredentials | default "dbpassword" }}
                   key: PGUSER
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.dbCredentials }}
+                  name: {{ .Values.secrets.dbCredentials | default "dbpassword" }}
                   key: PGPASSWORD
 
           ports:

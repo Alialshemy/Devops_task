@@ -4,6 +4,8 @@
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
+secrets:
+   dbCredentials: dbpassword
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
@@ -90,8 +92,6 @@ httpRoute:
   hostnames:
   - chart-example.local
   # List of rules and filters applied.
-  secrets:
-   dbCredentials: dbpassword
 
   rules:
   - matches:
