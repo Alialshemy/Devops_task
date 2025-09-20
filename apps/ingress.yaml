@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://helm.nginx.com/stable
     chart: ingress-nginx
-    targetRevision: 2.3.0
+    targetRevision: 2.2.0
     helm:
       releaseName: ingress-nginx
       valueFiles:
