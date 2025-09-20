@@ -7,9 +7,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://helm.nginx.com/stable
-    chart: ingress-nginx
-    targetRevision: 2.2.0
+    repoURL: oci://ghcr.io/nginx/charts
+    chart: nginx-ingress
+    targetRevision: 2.3.0
     helm:
       releaseName: ingress-nginx
       valueFiles:
