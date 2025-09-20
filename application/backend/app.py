@@ -27,6 +27,8 @@ with get_connection() as conn:
         )
         """)
         conn.commit()
+
+        
 @app.route('/health', methods=['GET'])
 def health():
     return {"status": "ok"}, 200
