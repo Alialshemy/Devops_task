@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-ingress
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+  - repoURL: oci://ghcr.io/nginx/charts
+    chart: nginx-ingress
+    targetRevision: 2.3.0
+    helm:
+      releaseName: ingress-nginx
+      valueFiles:
+        - $values/devops-manifest/ingress/values.yaml   
+  - repoURL: git@github.com:Alialshemy/Devops_task.git
+    targetRevision: main
+    ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ingress-nginx
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
