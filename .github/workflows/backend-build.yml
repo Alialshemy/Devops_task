@@ -41,7 +41,7 @@ jobs:
           # TAG=v1.0.0
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:$TAG
           
-          docker build -t backend-app ./application/backend/Dockerfile
+          docker build -t backend-app ./application/backend/
           docker tag backend-app:latest $IMAGE_URI
 
       # ---------------- Trivy Scan ----------------
