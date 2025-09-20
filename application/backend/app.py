@@ -3,11 +3,9 @@ from flask_cors import CORS
 import psycopg2
 import os
 import uuid
-
 app = Flask(__name__)
 # In prod: change "*" to your frontend domain
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "DELETE"])
-
 # DB config from environment
 DB_CONFIG = {
     "host": os.getenv("PGHOST", "localhost"),

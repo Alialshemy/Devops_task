@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
+      - 'application/frontend/**'
 permissions:
   id-token: write
   contents: read

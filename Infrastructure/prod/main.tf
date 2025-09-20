@@ -18,8 +18,18 @@ module "vpc" {
   private_route_table_tags = try(each.value.private_route_table_tags, null)
   tags                     = try(each.value.tags, null)
 }
+############################################################## ECR ###########################################################################
+module "ecr" {
+  for_each = { for idx, val in var.ecr : val => val }
+  source   = "../modules/ecr"
+  name     = each.value
+  tags = {
+    "Name" : "${each.value}"
+    "Environment" : "${var.Environment}"
 
-##############################################################  EKS ###########################################################################
+  }
+
+}##############################################################  EKS ###########################################################################
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -51,9 +61,9 @@ module "eks" {
     example = {
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["m5.xlarge"]
-      min_size       = 1
+      min_size       = 2
       max_size       = 2
-      desired_size   = 1
+      desired_size   = 2
     }
   }
 
