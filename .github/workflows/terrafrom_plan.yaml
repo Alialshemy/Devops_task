@@ -1,0 +1,101 @@
+name: Terraform Plan
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'Infrastructure/**'
+
+permissions:
+  pull-requests: write
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Infrastructure/dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------- AWS Auth ----------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.0.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+          role-session-name: GitHubActionsSession
+          
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        run: |
+          set +e
+          terraform plan -no-color -input=false > plan 2>&1
+          exit_code=$?
+          set -e
+          plan=$(cat plan | grep -v "Reading..." | grep -v "Read complete after" | grep -v "Refreshing state...")
+          
+          if [ $exit_code -ne 0 ]; then
+            plan="Terraform plan failed with the following error:    $plan"
+            echo "PLAN<<EOF" >> $GITHUB_ENV
+            echo "${plan}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "STATUS=❌ Terraform Plan for dev has Failed" >> $GITHUB_ENV
+            exit 1
+          else
+            plan="${plan:-No changes. Your infrastructure matches the configuration. Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.}"
+            echo "PLAN<<EOF" >> $GITHUB_ENV
+            echo "${plan}" | grep -v "^module" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "STATUS=✅ Terraform Plan for dev has succeeded" >> $GITHUB_ENV
+          fi
+          
+      - name: Comment Terraform Plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const plan = process.env.PLAN;
+            const body = `
+            ### ${process.env.STATUS}
+            
+            \`\`\`hcl
+            ${plan}
+            \`\`\`
+
+            <sub>This PR was opened by <code>${{ github.actor }}</code> and triggered by the <code>${{ github.event_name }}</code> event.</sub>
+            `;
+            const { owner, repo, number: issue_number } = context.issue;
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+
+      - name: Comment Terraform Plan to PR (failed)
+        uses: actions/github-script@v7
+        if: failure() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const plan = process.env.PLAN;
+            const body = `
+            ### ${process.env.STATUS}
+                  
+            \`\`\`hcl
+            ${plan}
+            \`\`\`
+
+            <sub>This PR was opened by <code>${{ github.actor }}</code> and triggered by the <code>${{ github.event_name }}</code> event.</sub>
+            `;
+            const { owner, repo, number: issue_number } = context.issue;
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
