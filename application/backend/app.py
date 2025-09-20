@@ -27,7 +27,6 @@ with get_connection() as conn:
         )
         """)
         conn.commit()
-
 @app.route('/addTask', methods=['POST'])
 def add_task():
     data = request.json or {}
