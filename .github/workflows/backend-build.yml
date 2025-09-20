@@ -6,15 +6,17 @@ on:
       - main
     paths:
       - 'application/backend/**'
+
 permissions:
   id-token: write
-  contents: read
+  contents: write  # allow pushing back to repo
 
 jobs:
   build-scan-push:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------- Checkout repo ----------------
       - name: Checkout repo
         uses: actions/checkout@v3
 
@@ -22,10 +24,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5.0.0
         with:
-          role-to-assume:  ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
           audience: sts.amazonaws.com
           role-session-name: GitHubActionsSession
+
       # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
         run: |
@@ -37,8 +40,6 @@ jobs:
         run: |
           # Use Git SHA as tag
           TAG=${{ github.sha }}
-          # Or uncomment below to use version number
-          # TAG=v1.0.0
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:$TAG
           
           docker build -t backend-app ./application/backend/
@@ -50,7 +51,7 @@ jobs:
         with:
           image-ref: 167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:${{ github.sha }}
           format: table
-          exit-code: '0'
+          exit-code: '0'  # do not fail workflow
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
@@ -61,3 +62,24 @@ jobs:
           TAG=${{ github.sha }}
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/backendapp:$TAG
           docker push $IMAGE_URI
+
+      # ---------------- Update values.yaml ----------------
+      - name: Update backend image tag in values.yaml
+        run: |
+          TAG=${{ github.sha }}
+          YAML_PATH=devops-manifest/backendapp/values.yaml
+          
+          # Use yq to update image tag
+          yq eval ".image.tag = \"$TAG\"" -i $YAML_PATH
+
+      # ---------------- Commit updated values.yaml ----------------
+      - name: Commit updated values.yaml
+        run: |
+          TAG=${{ github.sha }}
+          YAML_PATH=devops-manifest/backendapp/values.yaml
+          
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add $YAML_PATH
+          git commit -m "Update backend image tag to $TAG" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.Access_TOKEN }}@github.com/${{ github.repository }} HEAD:main
