@@ -25,7 +25,7 @@
   <ul id="taskList"></ul>
 
   <script>
-    const API_BASE = "http://localhost:5000"; // change to backend service URL in Kubernetes
+    const API_BASE = "api.alitest.site"; // change to backend service URL in Kubernetes
 
     async function listTasks() {
       const res = await fetch(`${API_BASE}/listTasks`);
