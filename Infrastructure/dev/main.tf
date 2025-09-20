@@ -38,7 +38,9 @@ module "eks" {
   name               = "${local.app}-cluster"
   kubernetes_version = "1.33"
   create             = true
-
+    security_group_tags ={
+      "karpenter.sh/discovery" = "questcode-cluster"
+    }
   addons = {
     coredns                = {}
     eks-pod-identity-agent = {
@@ -70,6 +72,7 @@ module "eks" {
   tags = {
     Environment = "prod"
     Terraform   = "true"
+    
   }
 
   depends_on = [module.vpc]
