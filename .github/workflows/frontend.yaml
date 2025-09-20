@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - 'frontend/**'
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-and-push:
