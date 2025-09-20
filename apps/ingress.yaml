@@ -9,7 +9,7 @@ spec:
   sources:
     - repoURL: oci://ghcr.io/nginx/charts
       chart: nginx-ingress
-      targetRevision: 2.3.0
+      targetRevision: "2.3.0"
       helm:
         releaseName: ingress-nginx
         valueFiles:
