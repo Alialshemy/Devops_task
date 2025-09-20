@@ -12,7 +12,7 @@ spec:
     helm:
       releaseName: frontendapp  
       valueFiles:
-         - $values/devops-manifest/nginx-ingress/values.yaml    
+         - $values/devops-manifest/backendapp/values.yaml    
 
   destination:
     server: https://kubernetes.default.svc
