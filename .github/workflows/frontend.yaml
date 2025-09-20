@@ -42,4 +42,4 @@ jobs:
       # ---------------- Push to ECR ----------------
       - name: Push to ECR
         run: |
-          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }_
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }
