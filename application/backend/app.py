@@ -51,7 +51,6 @@ def delete_task(task_id):
         return jsonify({"message": f"Task {task_id} deleted"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 @app.route('/listTasks', methods=['GET'])
 def list_tasks():
     try:
