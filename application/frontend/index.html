@@ -25,10 +25,10 @@
   <ul id="taskList"></ul>
 
   <script>
-    const API_BASE = "https://api.alitest.site"; // change to backend service URL in Kubernetes
+    const API_BASE = "api.alitest.site"; // change to backend service URL in Kubernetes
 
     async function listTasks() {
-      const res = await fetch(`${API_BASE}/listTasks`);
+      const res = await fetch(`https://${API_BASE}/listTasks`);
       const tasks = await res.json();
       const taskList = document.getElementById("taskList");
       taskList.innerHTML = "";
@@ -46,7 +46,7 @@
     async function addTask() {
       const title = document.getElementById("title").value;
       const description = document.getElementById("description").value;
-      await fetch(`${API_BASE}/addTask`, {
+      await fetch(`https://${API_BASE}addTask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description })
@@ -54,7 +54,7 @@
       listTasks();
     }
     async function deleteTask(id) {
-    await fetch(`${API_BASE}/deleteTask/${id}`, { method: "DELETE" });
+    await fetch(`https://${API_BASE}/deleteTask/${id}`, { method: "DELETE" });
     listTasks();
     }
     // load tasks on page load
