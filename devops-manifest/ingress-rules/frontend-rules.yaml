@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-api-ingress
+  namespace: dev
+  annotations:
+    kubernetes.io/ingress.class: nginx   # legacy style
+    cert-manager.io/cluster-issuer: alitest-cluster-issuer
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
+spec:
+  ingressClassName: nginx              
+  tls:
+    - hosts:
+        - dashboard.alitest.site
+      secretName: alitest-site-tls       
+  rules:
+    - host: dashboard.alitest.site
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontendapp         
+                port:
+                  number: 80
