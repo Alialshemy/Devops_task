@@ -1,36 +1,33 @@
-# Issuer resource (scoped to istio-system namespace)
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
-  name: alitest-issuer
-  namespace: ingress-nginx
+  name: alitest-cluster-issuer
 spec:
   acme:
     email: ali.alshemy125@gmail.com
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
-      name: alitest-issuer-account-key
+      name: alitest-cluster-issuer-account-key
     solvers:
-    - dns01:
-        cloudflare:
-          apiTokenSecretRef:
-            name: cloudflare-api-token-secret
-            key: api-token
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token-secret
+              key: api-token
 ---
-# Certificate resource
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: alitest-site-cert
-  namespace: ingress-nginx
+  namespace: ingress-nginx   # cert-manager needs a namespace for the secret
 spec:
   secretName: alitest-site-tls
   issuerRef:
-    name: alitest-issuer
-    kind: Issuer
+    name: alitest-cluster-issuer
+    kind: ClusterIssuer
   commonName: "*.alitest.site"
   dnsNames:
     - "*.alitest.site"
     - alitest.site
-  duration: 2160h
-  renewBefore: 720h
+  duration: 2160h    # 90 days default, here ~90 days
+  renewBefore: 720h  # renew 30 days before expiry
