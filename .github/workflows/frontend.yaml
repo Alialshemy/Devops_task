@@ -6,9 +6,10 @@ on:
       - main
     paths:
       - 'application/frontend/**'
+
 permissions:
   id-token: write
-  contents: read
+  contents: write  # allow pushing back to repo
 
 jobs:
   build-scan-push:
@@ -26,6 +27,7 @@ jobs:
           aws-region: us-east-1
           audience: sts.amazonaws.com
           role-session-name: GitHubActionsSession
+
       # ---------------- ECR Login ----------------
       - name: Login to Amazon ECR
         run: |
@@ -35,10 +37,7 @@ jobs:
       # ---------------- Docker Build ----------------
       - name: Build Docker image
         run: |
-          # Use Git SHA as tag
           TAG=${{ github.sha }}
-          # Or uncomment below to use version number
-          # TAG=v1.0.0
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:$TAG
           docker build -t frontend-app ./application/frontend/
           docker tag frontend-app:latest $IMAGE_URI
@@ -60,13 +59,12 @@ jobs:
           TAG=${{ github.sha }}
           IMAGE_URI=167175811320.dkr.ecr.us-east-1.amazonaws.com/frontendapp:$TAG
           docker push $IMAGE_URI
-      # ---------------- Update values.yaml ----------------
-      - name: Update backend image tag in values.yaml
+
+      # ---------------- Update frontend values.yaml ----------------
+      - name: Update frontend image tag in values.yaml
         run: |
           TAG=${{ github.sha }}
-          YAML_PATH=devops-manifest/backendapp/values.yaml
-          
-          # Use yq to update image tag
+          YAML_PATH=devops-manifest/frontendapp/values.yaml
           yq eval ".image.tag = \"$TAG\"" -i $YAML_PATH
 
       # ---------------- Commit updated values.yaml ----------------
@@ -74,9 +72,9 @@ jobs:
         run: |
           TAG=${{ github.sha }}
           YAML_PATH=devops-manifest/frontendapp/values.yaml
-          
+
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add $YAML_PATH
-          git commit -m "Update backend image tag to $TAG" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.Access_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          git commit -m "Update frontend image tag to $TAG" || echo "No changes to commit"
+          git push origin main
