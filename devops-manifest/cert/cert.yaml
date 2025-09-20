@@ -1,0 +1,36 @@
+# Issuer resource (scoped to istio-system namespace)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: alitest-issuer
+  namespace: ingress-nginx
+spec:
+  acme:
+    email: ali.alshemy125@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: alitest-issuer-account-key
+    solvers:
+    - dns01:
+        cloudflare:
+          apiTokenSecretRef:
+            name: cloudflare-api-token-secret
+            key: api-token
+---
+# Certificate resource
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alitest-site-cert
+  namespace: ingress-nginx
+spec:
+  secretName: alitest-site-tls
+  issuerRef:
+    name: alitest-issuer
+    kind: Issuer
+  commonName: "*.alitest.site"
+  dnsNames:
+    - "*.alitest.site"
+    - alitest.site
+  duration: 2160h
+  renewBefore: 720h
