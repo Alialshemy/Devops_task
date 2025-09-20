@@ -3,10 +3,13 @@ from flask_cors import CORS
 import psycopg2
 import os
 import uuid
+
 app = Flask(__name__)
-# In prod: change "*" to your frontend domain
-CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "DELETE"])
-# DB config from environment
+
+# Enable CORS for all routes and methods
+CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "DELETE", "OPTIONS"])
+
+# Database configuration
 DB_CONFIG = {
     "host": os.getenv("PGHOST", "localhost"),
     "dbname": os.getenv("PGDATABASE", "postgres"),
@@ -14,9 +17,11 @@ DB_CONFIG = {
     "password": os.getenv("PGPASSWORD", "test"),
     "port": int(os.getenv("PGPORT", "5432")),
 }
+
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
-# Initialize schema once
+
+# Initialize tasks table
 with get_connection() as conn:
     with conn.cursor() as cur:
         cur.execute("""
@@ -27,7 +32,6 @@ with get_connection() as conn:
         )
         """)
         conn.commit()
-
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -47,14 +51,11 @@ def add_task():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
-@app.route('/', methods=['GET'])
-def root():
-    return {"message": "welcome"}, 200
-
-@app.route('/deleteTask/<task_id>', methods=['DELETE'])
+@app.route('/deleteTask/<task_id>', methods=['DELETE', 'OPTIONS'])
 def delete_task(task_id):
+    if request.method == 'OPTIONS':
+        # Preflight request
+        return '', 204
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -63,6 +64,7 @@ def delete_task(task_id):
         return jsonify({"message": f"Task {task_id} deleted"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 @app.route('/listTasks', methods=['GET'])
 def list_tasks():
     try:
